@@ -1,0 +1,1137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="x-content-type" content="presentation" />
+<meta name="x-presentation-version" content="1.0" />
+<meta name="x-presentation-indicator" content="deck-stage .slide" />
+<title>SGLang Explained</title>
+<link rel="stylesheet" href="./_shared/base.css" />
+<link rel="stylesheet" href="./_shared/fonts.css" />
+<style>
+:root{
+  --bg:#000;
+  --text-1:#ffffff;
+  --text-2:#c6c6c6;
+  --text-3:#7a7a7a;
+  --hair:rgba(255,255,255,.18);
+  --hair-soft:rgba(255,255,255,.09);
+  --ease-smooth:cubic-bezier(.22,1,.36,1);
+}
+html,body,deck-stage{background:#000}
+.slide{
+  padding:64px 96px 80px;
+  transition:opacity .75s var(--ease-smooth), transform .75s var(--ease-smooth);
+  transform:translateX(46px);
+}
+.slide.prev{transform:translateX(-46px)}
+.slide::before{
+  content:"";position:absolute;inset:0;pointer-events:none;z-index:0;
+  background:radial-gradient(55% 50% at 82% 42%, rgba(255,255,255,.055), transparent 70%),
+             radial-gradient(40% 35% at 12% 90%, rgba(255,255,255,.03), transparent 70%);
+}
+.progress-bar{height:2px}
+.progress-bar>span{background:#fff;opacity:.85}
+
+/* ---------- layout ---------- */
+.split{
+  position:relative;z-index:1;
+  display:grid;grid-template-columns:minmax(0,45%) minmax(0,55%);
+  align-items:center;column-gap:72px;width:100%;height:100%;
+}
+.left{max-width:760px}
+.eyebrow{
+  font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:400;
+  letter-spacing:.3em;text-transform:uppercase;color:var(--text-3);
+  margin:0 0 26px;
+}
+.ttl{
+  font-family:'Archivo Black','Inter',sans-serif;
+  font-size:min(78px,4.7vw);line-height:.98;letter-spacing:-.015em;
+  margin:0 0 30px;color:#fff;text-transform:none;
+}
+.body{
+  font-family:'Inter',sans-serif;font-weight:300;
+  font-size:min(27px,1.72vw);line-height:1.62;color:var(--text-2);
+  margin:0;max-width:26em;
+}
+.visual{width:100%;display:flex;justify-content:center;align-items:center}
+.visual svg{width:100%;max-width:780px;height:auto;max-height:80vh;overflow:visible}
+
+/* ---------- entrance ---------- */
+.rise{opacity:0;transform:translateY(34px);filter:blur(10px);
+  transition:opacity .9s var(--ease-smooth) var(--d,0s),
+             transform .9s var(--ease-smooth) var(--d,0s),
+             filter .9s var(--ease-smooth) var(--d,0s);}
+.slide.active .rise{opacity:1;transform:none;filter:blur(0)}
+
+.vx text{font-family:'Inter',sans-serif;fill:#fff}
+.vx .mono{font-family:'JetBrains Mono',monospace}
+.vx .el{opacity:0;transform:translateY(14px);
+  transition:opacity .8s var(--ease-smooth) var(--d,0s),transform .8s var(--ease-smooth) var(--d,0s);}
+.slide.active .vx .el{opacity:1;transform:none}
+.vx .ln-draw{stroke-dasharray:900;stroke-dashoffset:900}
+.slide.active .vx .ln-draw{animation:vx-draw 1.15s var(--ease-smooth) var(--d,0s) forwards}
+@keyframes vx-draw{to{stroke-dashoffset:0}}
+
+/* ---------- looping motion (only while slide active) ---------- */
+.slide.active .march{animation:vx-march 1.1s linear infinite}
+@keyframes vx-march{to{stroke-dashoffset:-26}}
+
+.slide.active .run{animation:vx-run var(--dur,2.6s) linear infinite;animation-delay:var(--b,0s)}
+@keyframes vx-run{
+  0%{transform:translateX(var(--from,0px));opacity:0}
+  12%{opacity:1}88%{opacity:1}
+  100%{transform:translateX(var(--to,200px));opacity:0}
+}
+.slide.active .spin{animation:vx-spin 16s linear infinite}
+@keyframes vx-spin{to{transform:rotate(360deg)}}
+.slide.active .pulse{animation:vx-pulse 2.6s ease-in-out infinite;animation-delay:var(--b,0s)}
+@keyframes vx-pulse{0%,100%{opacity:.45}50%{opacity:1}}
+.slide.active .chipcore{animation:chip-pulse 3.4s ease-in-out infinite;animation-delay:var(--b,0s)}
+@keyframes chip-pulse{
+  0%,100%{fill:rgba(255,255,255,.04);stroke-opacity:.35}
+  50%{fill:rgba(255,255,255,.13);stroke-opacity:1}
+}
+.slide.active .head{animation:head-x 6s linear infinite}
+@keyframes head-x{
+  0%{transform:translateX(0);opacity:0}8%{opacity:1}92%{opacity:1}
+  100%{transform:translateX(560px);opacity:0}
+}
+.slide.active .sweep{animation:sweep-x 6s linear infinite}
+@keyframes sweep-x{
+  0%{transform:translateX(0)}16.6%{transform:translateX(96px)}33.3%{transform:translateX(192px)}
+  50%{transform:translateX(288px)}66.6%{transform:translateX(384px)}
+  83.3%,100%{transform:translateX(480px)}
+}
+.slide.active .run-kv{animation:kv-run 3s linear infinite;animation-delay:var(--b,0s)}
+@keyframes kv-run{
+  0%{transform:translateX(0);opacity:0}12%{opacity:1}85%{opacity:1}
+  100%{transform:translateX(168px);opacity:0}
+}
+.slide.active .tok{animation:tok-pop 1.5s ease-in-out infinite;animation-delay:var(--b,0s)}
+@keyframes tok-pop{0%,100%{opacity:.15;transform:scale(.75)}35%,70%{opacity:1;transform:scale(1)}}
+.slide.active .doc-flash{animation:doc-flash 4s ease-in-out infinite}
+.slide.active .doc-txt{animation:doc-txt-flash 4s ease-in-out infinite}
+@keyframes doc-flash{
+  0%,78%{fill:rgba(255,255,255,.05);stroke:rgba(255,255,255,.3)}
+  88%,95%{fill:#fff;stroke:#fff}
+  100%{fill:rgba(255,255,255,.05);stroke:rgba(255,255,255,.3)}
+}
+@keyframes doc-txt-flash{
+  0%,78%{fill:#bdbdbd}
+  88%,95%{fill:#000}
+  100%{fill:#bdbdbd}
+}
+
+/* continuous-batching row presence (6s = six token steps) */
+.cf{fill:rgba(255,255,255,.06)}
+.ct{fill:rgba(255,255,255,.28)}
+.slide.active .r1 .cf{animation:cf1 6s linear infinite}
+.slide.active .r1 .ct{animation:ct1 6s linear infinite}
+.slide.active .r2 .cf{animation:cf2 6s linear infinite}
+.slide.active .r2 .ct{animation:ct2 6s linear infinite}
+.slide.active .r3 .cf{animation:cf3 6s linear infinite}
+.slide.active .r3 .ct{animation:ct3 6s linear infinite}
+.slide.active .r4 .cf{animation:cf4 6s linear infinite}
+.slide.active .r4 .ct{animation:ct4 6s linear infinite}
+.slide.active .r5 .cf{animation:cf5 6s linear infinite}
+.slide.active .r5 .ct{animation:ct5 6s linear infinite}
+@keyframes cf1{0%,49%{fill:#fff}50%,100%{fill:rgba(255,255,255,.06)}}
+@keyframes ct1{0%,49%{fill:#000}50%,100%{fill:rgba(255,255,255,.28)}}
+@keyframes cf2{0%,82%{fill:#fff}83%,100%{fill:rgba(255,255,255,.06)}}
+@keyframes ct2{0%,82%{fill:#000}83%,100%{fill:rgba(255,255,255,.28)}}
+@keyframes cf3{0%,16%{fill:rgba(255,255,255,.06)}17%,65%{fill:#fff}66%,100%{fill:rgba(255,255,255,.06)}}
+@keyframes ct3{0%,16%{fill:rgba(255,255,255,.28)}17%,65%{fill:#000}66%,100%{fill:rgba(255,255,255,.28)}}
+@keyframes cf4{0%,32%{fill:rgba(255,255,255,.06)}33%,100%{fill:#fff}}
+@keyframes ct4{0%,32%{fill:rgba(255,255,255,.28)}33%,100%{fill:#000}}
+@keyframes cf5{0%,49%{fill:rgba(255,255,255,.06)}50%,100%{fill:#fff}}
+@keyframes ct5{0%,49%{fill:rgba(255,255,255,.28)}50%,100%{fill:#000}}
+
+@media (max-width:1100px){
+  .split{column-gap:40px}
+  .ttl{font-size:min(56px,7vw)}
+  .body{font-size:min(21px,2.4vw)}
+}
+
+/* ---------- reference slide: code editor window ---------- */
+.ref{
+  position:relative;z-index:1;
+  display:flex;flex-direction:column;height:100%;
+}
+.codewin{
+  flex:1;min-height:0;display:flex;flex-direction:column;
+  background:#1e1e1e;border:1px solid #2d2d2d;
+  border-radius:20px;overflow:hidden;
+  box-shadow:0 40px 120px rgba(0,0,0,.6);
+}
+.win-bar{
+  flex-shrink:0;display:flex;align-items:center;gap:20px;
+  height:72px;padding:0 28px;border-bottom:1px solid #2d2d2d;
+}
+.win-ic{
+  width:38px;height:38px;border-radius:8px;background:#2d2d2d;
+  border:1px solid #3c3c3c;
+  display:flex;align-items:center;justify-content:center;
+  font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:700;color:#fff;
+}
+.win-title{font-family:'JetBrains Mono',monospace;font-size:19px;color:#fff;letter-spacing:.01em}
+.win-lang{margin-left:auto;display:flex;align-items:center;gap:10px;
+  font-family:'JetBrains Mono',monospace;font-size:16px;color:#858585;}
+.win-lang .caret{font-size:11px;color:#858585}
+.win-copy{
+  display:flex;align-items:center;justify-content:center;
+  width:46px;height:46px;border-radius:10px;background:transparent;
+  border:1px solid transparent;cursor:pointer;color:#cccccc;
+  transition:background .25s,border-color .25s,color .25s,transform .25s;
+}
+.win-copy:hover{background:rgba(255,255,255,.08);border-color:#3c3c3c;transform:translateY(-1px)}
+.win-copy svg{width:24px;height:24px;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.win-copy.ok{color:#4ec9b0;border-color:#2d5a52}
+.win-tabs{display:flex;flex-shrink:0;border-bottom:1px solid #2d2d2d;background:#252526}
+.win-tab{
+  appearance:none;background:none;border:none;cursor:pointer;
+  display:flex;align-items:center;gap:12px;
+  padding:0 30px;height:54px;
+  font-family:'JetBrains Mono',monospace;font-size:16px;color:#858585;
+  border-right:1px solid #2d2d2d;
+  position:relative;transition:color .25s,background .25s;
+}
+.win-tab .td{font-size:11px;border:1px currentColor solid;border-radius:4px;padding:1px 5px;line-height:1}
+.win-tab:hover{color:#cfcfcf}
+.win-tab.active{color:#fff;background:#1e1e1e}
+.win-tab.active::after{content:"";position:absolute;left:0;right:0;bottom:-1px;height:2px;background:#fff}
+.win-body{flex:1;min-height:0;position:relative}
+.win-pane{
+  position:absolute;inset:0;overflow:auto;
+  padding:30px 38px;height:100%;
+  display:none;
+}
+.win-pane.active{display:block}
+.win-pane pre{margin:0;font-family:'JetBrains Mono',monospace;font-size:19px;line-height:1.62;color:#d4d4d4;white-space:pre}
+/* VS Code Dark+ syntax tokens */
+.win-pane .com{color:#6a9955;font-style:italic}
+.win-pane .key{color:#9cdcfe}
+.win-pane .str{color:#ce9178}
+.win-pane .kw{color:#569cd6}
+.win-pane .ctrl{color:#c586c0}
+.win-pane .fn{color:#dcdcaa}
+.win-pane .var{color:#9cdcfe}
+.win-pane .num{color:#b5cea8}
+.win-pane .typ{color:#4ec9b0}
+.win-pane .esc{color:#c586c0}
+.win-pane::-webkit-scrollbar{width:12px;height:12px}
+.win-pane::-webkit-scrollbar-track{background:transparent}
+.win-pane::-webkit-scrollbar-thumb{background:rgba(255,255,255,.22);border-radius:8px;border:3px solid #1e1e1e}
+.win-pane::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.4)}
+.win-hint{
+  flex-shrink:0;padding:10px 28px;border-top:1px solid #2d2d2d;
+  font-family:'JetBrains Mono',monospace;font-size:12.5px;letter-spacing:.14em;
+  text-transform:uppercase;color:#6e7681;display:flex;justify-content:space-between;
+}
+</style>
+</head>
+<body>
+<deck-stage width="1920" height="1080">
+
+<!-- ============ 01 · SGLANG ============ -->
+<section class="slide active" data-deck-label="SGLang">
+  <div class="split">
+    <div class="left">
+      <p class="eyebrow rise" style="--d:.05s">01 — What it is</p>
+      <h1 class="ttl rise" style="--d:.16s">SGLang</h1>
+      <p class="body rise" style="--d:.3s">A high-performance, open-source serving framework for large language and multimodal models. It runs inference with low latency and high throughput — from one GPU to large distributed clusters.</p>
+    </div>
+    <div class="visual rise" style="--d:.4s">
+      <svg class="vx" viewBox="0 0 760 600" role="img" aria-label="Requests flowing through an SGLang server into a GPU cluster">
+        <defs>
+          <marker id="a1" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M0,0 L10,5 L0,10 z" fill="#fff"/></marker>
+        </defs>
+
+        <!-- incoming requests -->
+        <g class="el" style="--d:.15s">
+          <line x1="24" y1="235" x2="238" y2="235" stroke="rgba(255,255,255,.22)" stroke-width="1.2"/>
+          <line x1="24" y1="300" x2="238" y2="300" stroke="rgba(255,255,255,.22)" stroke-width="1.2"/>
+          <line x1="24" y1="365" x2="238" y2="365" stroke="rgba(255,255,255,.22)" stroke-width="1.2"/>
+        </g>
+        <circle class="run" cx="24" cy="235" r="4.5" fill="#fff" style="--from:0px;--to:206px;--dur:2.3s;--b:0s"/>
+        <circle class="run" cx="24" cy="300" r="4.5" fill="#fff" style="--from:0px;--to:206px;--dur:2.3s;--b:.7s"/>
+        <circle class="run" cx="24" cy="365" r="4.5" fill="#fff" style="--from:0px;--to:206px;--dur:2.3s;--b:1.4s"/>
+        <text class="mono el" x="24" y="200" font-size="12" fill="#7a7a7a" style="--d:.2s">requests</text>
+
+        <!-- connectors to cluster -->
+        <g stroke="rgba(255,255,255,.18)" stroke-width="1.2" fill="none">
+          <path d="M361 251 L488 172"/><path d="M372 271 L604 178"/>
+          <path d="M378 300 L484 300"/><path d="M374 312 L604 300"/>
+          <path d="M365 344 L488 428"/><path d="M372 329 L604 422"/>
+        </g>
+        <g fill="#fff">
+          <circle r="3"><animateMotion dur="2.6s" begin="0s" repeatCount="indefinite" path="M361 251 L488 172"/></circle>
+          <circle r="3"><animateMotion dur="2.6s" begin=".45s" repeatCount="indefinite" path="M372 271 L604 178"/></circle>
+          <circle r="3"><animateMotion dur="2.6s" begin=".9s" repeatCount="indefinite" path="M378 300 L484 300"/></circle>
+          <circle r="3"><animateMotion dur="2.6s" begin="1.35s" repeatCount="indefinite" path="M374 312 L604 300"/></circle>
+          <circle r="3"><animateMotion dur="2.6s" begin="1.8s" repeatCount="indefinite" path="M365 344 L488 428"/></circle>
+          <circle r="3"><animateMotion dur="2.6s" begin="2.25s" repeatCount="indefinite" path="M372 329 L604 422"/></circle>
+        </g>
+
+        <!-- server -->
+        <g>
+          <circle class="spin el" cx="300" cy="300" r="96" fill="none" stroke="rgba(255,255,255,.4)" stroke-width="1.4"
+                  stroke-dasharray="2 10" style="transform-origin:300px 300px;--d:.5s"/>
+          <circle class="el" cx="300" cy="300" r="78" fill="rgba(255,255,255,.05)" stroke="#fff" stroke-width="1.6" style="--d:.55s"/>
+          <text class="el" x="300" y="296" text-anchor="middle" font-size="29" font-weight="800" style="--d:.65s">SGLang</text>
+          <text class="mono el" x="300" y="324" text-anchor="middle" font-size="12" fill="#8a8a8a" style="--d:.7s">serving runtime</text>
+        </g>
+        <text class="mono el" x="300" y="428" text-anchor="middle" font-size="12" fill="#7a7a7a" style="--d:.8s">SINGLE GPU</text>
+
+        <!-- GPU cluster -->
+        <g>
+          <g transform="translate(520 150)"><rect class="chipcore el" x="-36" y="-36" width="72" height="72" rx="12" fill="rgba(255,255,255,.04)" stroke="#fff" stroke-width="1.4" style="--d:.7s;--b:0s"/>
+            <rect x="-13" y="-13" width="26" height="26" rx="4" fill="none" stroke="rgba(255,255,255,.55)" stroke-width="1.2"/>
+            <g stroke="rgba(255,255,255,.45)" stroke-width="1.4"><line x1="-22" y1="-36" x2="-22" y2="-28"/><line x1="0" y1="-36" x2="0" y2="-28"/><line x1="22" y1="-36" x2="22" y2="-28"/><line x1="-22" y1="36" x2="-22" y2="28"/><line x1="0" y1="36" x2="0" y2="28"/><line x1="22" y1="36" x2="22" y2="28"/></g></g>
+          <g transform="translate(640 150)"><rect class="chipcore el" x="-36" y="-36" width="72" height="72" rx="12" fill="rgba(255,255,255,.04)" stroke="#fff" stroke-width="1.4" style="--d:.78s;--b:.5s"/>
+            <rect x="-13" y="-13" width="26" height="26" rx="4" fill="none" stroke="rgba(255,255,255,.55)" stroke-width="1.2"/>
+            <g stroke="rgba(255,255,255,.45)" stroke-width="1.4"><line x1="-22" y1="-36" x2="-22" y2="-28"/><line x1="0" y1="-36" x2="0" y2="-28"/><line x1="22" y1="-36" x2="22" y2="-28"/><line x1="-22" y1="36" x2="-22" y2="28"/><line x1="0" y1="36" x2="0" y2="28"/><line x1="22" y1="36" x2="22" y2="28"/></g></g>
+          <g transform="translate(520 300)"><rect class="chipcore el" x="-36" y="-36" width="72" height="72" rx="12" fill="rgba(255,255,255,.04)" stroke="#fff" stroke-width="1.4" style="--d:.86s;--b:1s"/>
+            <rect x="-13" y="-13" width="26" height="26" rx="4" fill="none" stroke="rgba(255,255,255,.55)" stroke-width="1.2"/>
+            <g stroke="rgba(255,255,255,.45)" stroke-width="1.4"><line x1="-22" y1="-36" x2="-22" y2="-28"/><line x1="0" y1="-36" x2="0" y2="-28"/><line x1="22" y1="-36" x2="22" y2="-28"/><line x1="-22" y1="36" x2="-22" y2="28"/><line x1="0" y1="36" x2="0" y2="28"/><line x1="22" y1="36" x2="22" y2="28"/></g></g>
+          <g transform="translate(640 300)"><rect class="chipcore el" x="-36" y="-36" width="72" height="72" rx="12" fill="rgba(255,255,255,.04)" stroke="#fff" stroke-width="1.4" style="--d:.94s;--b:1.5s"/>
+            <rect x="-13" y="-13" width="26" height="26" rx="4" fill="none" stroke="rgba(255,255,255,.55)" stroke-width="1.2"/>
+            <g stroke="rgba(255,255,255,.45)" stroke-width="1.4"><line x1="-22" y1="-36" x2="-22" y2="-28"/><line x1="0" y1="-36" x2="0" y2="-28"/><line x1="22" y1="-36" x2="22" y2="-28"/><line x1="-22" y1="36" x2="-22" y2="28"/><line x1="0" y1="36" x2="0" y2="28"/><line x1="22" y1="36" x2="22" y2="28"/></g></g>
+          <g transform="translate(520 450)"><rect class="chipcore el" x="-36" y="-36" width="72" height="72" rx="12" fill="rgba(255,255,255,.04)" stroke="#fff" stroke-width="1.4" style="--d:1.02s;--b:2s"/>
+            <rect x="-13" y="-13" width="26" height="26" rx="4" fill="none" stroke="rgba(255,255,255,.55)" stroke-width="1.2"/>
+            <g stroke="rgba(255,255,255,.45)" stroke-width="1.4"><line x1="-22" y1="-36" x2="-22" y2="-28"/><line x1="0" y1="-36" x2="0" y2="-28"/><line x1="22" y1="-36" x2="22" y2="-28"/><line x1="-22" y1="36" x2="-22" y2="28"/><line x1="0" y1="36" x2="0" y2="28"/><line x1="22" y1="36" x2="22" y2="28"/></g></g>
+          <g transform="translate(640 450)"><rect class="chipcore el" x="-36" y="-36" width="72" height="72" rx="12" fill="rgba(255,255,255,.04)" stroke="#fff" stroke-width="1.4" style="--d:1.1s;--b:2.5s"/>
+            <rect x="-13" y="-13" width="26" height="26" rx="4" fill="none" stroke="rgba(255,255,255,.55)" stroke-width="1.2"/>
+            <g stroke="rgba(255,255,255,.45)" stroke-width="1.4"><line x1="-22" y1="-36" x2="-22" y2="-28"/><line x1="0" y1="-36" x2="0" y2="-28"/><line x1="22" y1="-36" x2="22" y2="-28"/><line x1="-22" y1="36" x2="-22" y2="28"/><line x1="0" y1="36" x2="0" y2="28"/><line x1="22" y1="36" x2="22" y2="28"/></g></g>
+        </g>
+        <text class="mono el" x="580" y="540" text-anchor="middle" font-size="12" fill="#7a7a7a" style="--d:1.15s">DISTRIBUTED CLUSTER</text>
+      </svg>
+    </div>
+  </div>
+  <div class="notes">SGLang is a serving framework: requests enter the runtime, it schedules them across one GPU or a whole cluster.</div>
+</section>
+
+<!-- ============ 02 · SGL ============ -->
+<section class="slide" data-deck-label="SGL">
+  <div class="split">
+    <div class="left">
+      <p class="eyebrow rise" style="--d:.05s">02 — The language</p>
+      <h2 class="ttl rise" style="--d:.16s">SGL</h2>
+      <p class="body rise" style="--d:.3s">Structured Generation Language — a small language embedded in Python for writing multi-step model programs: parallel and forked generations, branching, and JSON- or regex-constrained decoding. One optimizable program instead of isolated API calls.</p>
+    </div>
+    <div class="visual rise" style="--d:.4s">
+      <svg class="vx" viewBox="0 0 760 700" role="img" aria-label="An LM program forking into parallel constrained generations">
+        <defs>
+          <marker id="a2" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M0,0 L10,5 L0,10 z" fill="#fff"/></marker>
+        </defs>
+
+        <!-- fork tree connectors -->
+        <g stroke="rgba(255,255,255,.45)" stroke-width="1.4" fill="none">
+          <path class="ln-draw" style="--d:.5s" d="M380 88 L380 140"/>
+          <path class="ln-draw" style="--d:.6s" d="M180 140 L580 140"/>
+          <path class="ln-draw" style="--d:.7s" d="M180 140 L180 202"/>
+          <path class="ln-draw" style="--d:.8s" d="M380 140 L380 332"/>
+          <path class="ln-draw" style="--d:.9s" d="M580 140 L580 462"/>
+        </g>
+        <!-- join connectors -->
+        <g stroke="rgba(255,255,255,.3)" stroke-width="1.2" fill="none" stroke-dasharray="3 6">
+          <path class="ln-draw" style="--d:1.15s" d="M680 230 C714 380 698 540 472 596"/>
+          <path class="ln-draw" style="--d:1.25s" d="M680 360 C708 470 640 566 470 596"/>
+          <path class="ln-draw" style="--d:1.35s" d="M680 490 C640 548 560 588 470 596"/>
+        </g>
+
+        <!-- prompt node -->
+        <g class="el" style="--d:.35s">
+          <rect x="290" y="36" width="180" height="52" rx="26" fill="rgba(255,255,255,.06)" stroke="#fff" stroke-width="1.5"/>
+          <text class="mono" x="380" y="69" text-anchor="middle" font-size="17">prompt</text>
+        </g>
+
+        <!-- row 1 -->
+        <g class="el" style="--d:.95s">
+          <rect x="85" y="202" width="190" height="56" rx="12" fill="rgba(255,255,255,.05)" stroke="rgba(255,255,255,.55)" stroke-width="1.4"/>
+          <text class="mono" x="180" y="237" text-anchor="middle" font-size="17">gen(&quot;…&quot;)</text>
+        </g>
+        <line class="ln-draw" style="--d:1.05s" x1="288" y1="230" x2="342" y2="230" stroke="#fff" stroke-width="1.4" marker-end="url(#a2)"/>
+        <g class="el" style="--d:1.1s">
+          <rect x="350" y="202" width="330" height="56" rx="12" fill="rgba(255,255,255,.05)" stroke="rgba(255,255,255,.55)" stroke-width="1.4"/>
+          <text class="mono" x="515" y="237" text-anchor="middle" font-size="16">regex: &quot;[0-9]+&quot;</text>
+        </g>
+
+        <!-- row 2 -->
+        <g class="el" style="--d:1.05s">
+          <rect x="285" y="332" width="190" height="56" rx="12" fill="rgba(255,255,255,.05)" stroke="rgba(255,255,255,.55)" stroke-width="1.4"/>
+          <text class="mono" x="380" y="367" text-anchor="middle" font-size="17">gen(&quot;…&quot;)</text>
+        </g>
+        <line class="ln-draw" style="--d:1.15s" x1="488" y1="360" x2="542" y2="360" stroke="#fff" stroke-width="1.4" marker-end="url(#a2)"/>
+        <g class="el" style="--d:1.2s">
+          <rect x="550" y="332" width="130" height="56" rx="12" fill="rgba(255,255,255,.05)" stroke="rgba(255,255,255,.55)" stroke-width="1.4"/>
+          <text class="mono" x="615" y="367" text-anchor="middle" font-size="16">JSON</text>
+        </g>
+
+        <!-- row 3 -->
+        <g class="el" style="--d:1.15s">
+          <rect x="485" y="462" width="190" height="56" rx="12" fill="rgba(255,255,255,.05)" stroke="rgba(255,255,255,.55)" stroke-width="1.4"/>
+          <text class="mono" x="580" y="497" text-anchor="middle" font-size="17">gen(&quot;…&quot;)</text>
+        </g>
+        <line class="ln-draw" style="--d:1.25s" x1="288" y1="490" x2="342" y2="490" stroke="#fff" stroke-width="1.4" marker-end="url(#a2)"/>
+        <g class="el" style="--d:1.3s">
+          <rect x="70" y="462" width="200" height="56" rx="12" fill="rgba(255,255,255,.05)" stroke="rgba(255,255,255,.55)" stroke-width="1.4"/>
+          <text class="mono" x="170" y="497" text-anchor="middle" font-size="16">choices A / B / C</text>
+        </g>
+
+        <!-- merged program -->
+        <g class="el" style="--d:1.5s">
+          <rect x="270" y="596" width="220" height="52" rx="26" fill="#fff" stroke="#fff"/>
+          <text class="mono" x="380" y="629" text-anchor="middle" font-size="16" fill="#000" font-weight="700">one LM program</text>
+        </g>
+      </svg>
+    </div>
+  </div>
+  <div class="notes">SGL expresses forks, parallel generations and output constraints in one program, so the runtime can see and optimize the whole structure.</div>
+</section>
+
+<!-- ============ 03 · CO-DESIGNED ============ -->
+<section class="slide" data-deck-label="Co-designed">
+  <div class="split">
+    <div class="left">
+      <p class="eyebrow rise" style="--d:.05s">03 — Co-design</p>
+      <h2 class="ttl rise" style="--d:.16s">Co-designed</h2>
+      <p class="body rise" style="--d:.3s">Frontend and backend were built together. Language primitives expose program structure — shared prefixes, forks, constraints — and the runtime exploits that structure for batching and cache reuse. A generic HTTP API hides exactly this.</p>
+    </div>
+    <div class="visual rise" style="--d:.4s">
+      <svg class="vx" viewBox="0 0 760 600" role="img" aria-label="Frontend language and backend runtime exchanging structure and optimization">
+        <defs>
+          <marker id="a3" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M0,0 L10,5 L0,10 z" fill="#fff"/></marker>
+        </defs>
+
+        <!-- exchange arcs -->
+        <path class="march el" d="M250 196 C330 96 430 96 510 196" fill="none" stroke="#fff" stroke-width="1.6"
+              marker-end="url(#a3)" stroke-dasharray="4 12" style="--d:.7s"/>
+        <path class="march el" d="M510 404 C430 504 330 504 250 404" fill="none" stroke="#fff" stroke-width="1.6"
+              marker-end="url(#a3)" stroke-dasharray="4 12" style="--d:.85s"/>
+        <g fill="#fff">
+          <circle r="3.5" opacity=".85"><animateMotion dur="3.4s" repeatCount="indefinite" path="M250 196 C330 96 430 96 510 196"/></circle>
+          <circle r="3.5" opacity=".85"><animateMotion dur="3.4s" begin="1.7s" repeatCount="indefinite" path="M510 404 C430 504 330 504 250 404"/></circle>
+        </g>
+
+        <!-- frontend -->
+        <g class="el" style="--d:.45s">
+          <circle cx="220" cy="300" r="118" fill="rgba(255,255,255,.04)" stroke="#fff" stroke-width="1.6"/>
+          <text class="mono" x="220" y="278" text-anchor="middle" font-size="14" fill="#9a9a9a">FRONTEND</text>
+          <text x="220" y="322" text-anchor="middle" font-size="30" font-weight="700">Language</text>
+        </g>
+        <text class="mono el" x="220" y="456" text-anchor="middle" font-size="13" fill="#7a7a7a" style="--d:.6s">python primitives</text>
+
+        <!-- backend -->
+        <g class="el" style="--d:.6s">
+          <circle cx="540" cy="300" r="118" fill="rgba(255,255,255,.04)" stroke="#fff" stroke-width="1.6"/>
+          <text class="mono" x="540" y="278" text-anchor="middle" font-size="14" fill="#9a9a9a">BACKEND</text>
+          <text x="540" y="322" text-anchor="middle" font-size="30" font-weight="700">Runtime</text>
+        </g>
+        <text class="mono el" x="540" y="456" text-anchor="middle" font-size="13" fill="#7a7a7a" style="--d:.75s">scheduler · KV cache</text>
+
+        <!-- arc labels -->
+        <text class="mono el" x="380" y="100" text-anchor="middle" font-size="13" fill="#9a9a9a" style="--d:1s">shared prefixes · forks · constraints</text>
+        <text class="mono el" x="380" y="522" text-anchor="middle" font-size="13" fill="#9a9a9a" style="--d:1.1s">batching · cache reuse</text>
+      </svg>
+    </div>
+  </div>
+  <div class="notes">Structure flows from the language down to the runtime; optimizations flow back as speed. The two sides were designed as one loop.</div>
+</section>
+
+<!-- ============ 04 · RADIXATTENTION ============ -->
+<section class="slide" data-deck-label="RadixAttention">
+  <div class="split">
+    <div class="left">
+      <p class="eyebrow rise" style="--d:.05s">04 — KV cache reuse</p>
+      <h2 class="ttl rise" style="--d:.16s">RadixAttention</h2>
+      <p class="body rise" style="--d:.3s">KV caches live in a radix tree keyed by token sequences. Every new request reuses its longest matching prefix — a shared system prompt, few-shot examples — and computes only the unmatched suffix. Sharing is automatic; LRU eviction frees memory.</p>
+    </div>
+    <div class="visual rise" style="--d:.4s">
+      <svg class="vx" viewBox="0 0 760 660" role="img" aria-label="A radix tree of token sequences sharing one prefix">
+        <!-- tree connectors -->
+        <g stroke="rgba(255,255,255,.55)" stroke-width="1.5" fill="none">
+          <path class="ln-draw" style="--d:.4s" d="M94 60 L145 60"/>
+          <path class="ln-draw" style="--d:.48s" d="M275 60 L295 60"/>
+          <path class="ln-draw" style="--d:.56s" d="M425 60 L435 60"/>
+          <path class="ln-draw" style="--d:.68s" d="M510 82 L170 228"/>
+          <path class="ln-draw" style="--d:.76s" d="M510 82 L380 228"/>
+          <path class="ln-draw" style="--d:.84s" d="M510 82 L590 228"/>
+        </g>
+        <g stroke="rgba(255,255,255,.32)" stroke-width="1.2" fill="none">
+          <path class="ln-draw" style="--d:1s" d="M170 272 L105 378"/>
+          <path class="ln-draw" style="--d:1.05s" d="M170 272 L235 378"/>
+          <path class="ln-draw" style="--d:1.1s" d="M380 272 L335 378"/>
+          <path class="ln-draw" style="--d:1.15s" d="M380 272 L425 378"/>
+          <path class="ln-draw" style="--d:1.2s" d="M590 272 L545 378"/>
+          <path class="ln-draw" style="--d:1.25s" d="M590 272 L660 378"/>
+        </g>
+
+        <!-- shared prefix chain (white = reused) -->
+        <g class="el" style="--d:.3s">
+          <circle cx="70" cy="60" r="24" fill="rgba(255,255,255,.05)" stroke="#fff" stroke-width="1.5"/>
+          <text class="mono" x="70" y="65" text-anchor="middle" font-size="12">root</text>
+          <text class="mono" x="70" y="22" text-anchor="middle" font-size="11" fill="#7a7a7a">new request</text>
+        </g>
+        <g class="el" style="--d:.42s">
+          <rect x="145" y="38" width="130" height="44" rx="22" fill="#fff"/>
+          <text class="mono" x="210" y="66" text-anchor="middle" font-size="15" fill="#000" font-weight="700">system</text>
+        </g>
+        <g class="el" style="--d:.5s">
+          <rect x="295" y="38" width="130" height="44" rx="22" fill="#fff"/>
+          <text class="mono" x="360" y="66" text-anchor="middle" font-size="15" fill="#000" font-weight="700">prompt</text>
+        </g>
+        <g class="el" style="--d:.58s">
+          <rect x="435" y="38" width="150" height="44" rx="22" fill="#fff"/>
+          <text class="mono" x="510" y="66" text-anchor="middle" font-size="15" fill="#000" font-weight="700">few-shot</text>
+        </g>
+
+        <!-- branch nodes -->
+        <g class="el" style="--d:.75s">
+          <rect x="80" y="228" width="180" height="44" rx="22" fill="#fff"/>
+          <text class="mono" x="170" y="256" text-anchor="middle" font-size="15" fill="#000" font-weight="700">summarize</text>
+        </g>
+        <g class="el" style="--d:.83s">
+          <rect x="300" y="228" width="160" height="44" rx="22" fill="rgba(255,255,255,.05)" stroke="rgba(255,255,255,.5)" stroke-width="1.4"/>
+          <text class="mono" x="380" y="256" text-anchor="middle" font-size="15">translate</text>
+        </g>
+        <g class="el" style="--d:.91s">
+          <rect x="520" y="228" width="140" height="44" rx="22" fill="rgba(255,255,255,.05)" stroke="rgba(255,255,255,.5)" stroke-width="1.4"/>
+          <text class="mono" x="590" y="256" text-anchor="middle" font-size="15">extract</text>
+        </g>
+
+        <!-- suffix leaves (gray = computed) -->
+        <g class="el" style="--d:1.05s">
+          <rect x="50" y="378" width="110" height="40" rx="20" fill="rgba(255,255,255,.05)" stroke="rgba(255,255,255,.3)" stroke-width="1.3"/>
+          <text class="mono" x="105" y="403" text-anchor="middle" font-size="14" fill="#bdbdbd">doc 1</text>
+        </g>
+        <g class="el" style="--d:1.1s">
+          <rect class="doc-flash" x="180" y="378" width="110" height="40" rx="20" fill="rgba(255,255,255,.05)" stroke="rgba(255,255,255,.3)" stroke-width="1.3"/>
+          <text class="mono doc-txt" x="235" y="403" text-anchor="middle" font-size="14" fill="#bdbdbd">doc 2</text>
+        </g>
+        <g class="el" style="--d:1.15s">
+          <rect x="295" y="378" width="80" height="40" rx="20" fill="rgba(255,255,255,.05)" stroke="rgba(255,255,255,.3)" stroke-width="1.3"/>
+          <text class="mono" x="335" y="403" text-anchor="middle" font-size="14" fill="#bdbdbd">FR</text>
+        </g>
+        <g class="el" style="--d:1.2s">
+          <rect x="385" y="378" width="80" height="40" rx="20" fill="rgba(255,255,255,.05)" stroke="rgba(255,255,255,.3)" stroke-width="1.3"/>
+          <text class="mono" x="425" y="403" text-anchor="middle" font-size="14" fill="#bdbdbd">DE</text>
+        </g>
+        <g class="el" style="--d:1.25s">
+          <rect x="490" y="378" width="110" height="40" rx="20" fill="rgba(255,255,255,.05)" stroke="rgba(255,255,255,.3)" stroke-width="1.3"/>
+          <text class="mono" x="545" y="403" text-anchor="middle" font-size="14" fill="#bdbdbd">names</text>
+        </g>
+        <g class="el" style="--d:1.3s">
+          <rect x="615" y="378" width="90" height="40" rx="20" fill="rgba(255,255,255,.05)" stroke="rgba(255,255,255,.3)" stroke-width="1.3"/>
+          <text class="mono" x="660" y="403" text-anchor="middle" font-size="14" fill="#bdbdbd">dates</text>
+        </g>
+
+        <!-- traveling request dot -->
+        <g>
+          <circle r="10" fill="rgba(255,255,255,.18)"/>
+          <circle r="5" fill="#fff"/>
+          <animateMotion dur="4s" repeatCount="indefinite" path="M70 60 L510 60 L170 250 L235 398"/>
+        </g>
+
+        <!-- legend -->
+        <g class="el" style="--d:1.4s">
+          <rect x="40" y="560" width="16" height="11" rx="2" fill="#fff"/>
+          <text class="mono" x="66" y="570" font-size="12.5" fill="#9a9a9a">reused KV prefix</text>
+          <rect x="248" y="560" width="16" height="11" rx="2" fill="rgba(255,255,255,.05)" stroke="rgba(255,255,255,.4)"/>
+          <text class="mono" x="274" y="570" font-size="12.5" fill="#9a9a9a">suffix computed now</text>
+        </g>
+      </svg>
+    </div>
+  </div>
+  <div class="notes">The tree keys every sequence by its tokens. A new request matches the longest shared prefix for free and only pays for its own suffix.</div>
+</section>
+
+<!-- ============ 05 · ZERO-OVERHEAD SCHEDULER ============ -->
+<section class="slide" data-deck-label="Zero-overhead scheduler">
+  <div class="split">
+    <div class="left">
+      <p class="eyebrow rise" style="--d:.05s">05 — Scheduling</p>
+      <h2 class="ttl rise" style="--d:.16s">Zero-overhead CPU scheduler</h2>
+      <p class="body rise" style="--d:.3s">The CPU prepares the next batch while the GPU runs the current one. Scheduling and kernel execution overlap, so there are no idle gaps — kernels launch back-to-back and the GPU stays saturated.</p>
+    </div>
+    <div class="visual rise" style="--d:.4s">
+      <svg class="vx" viewBox="0 0 760 560" role="img" aria-label="CPU scheduling overlapping GPU batch execution on parallel timelines">
+        <text class="mono el" x="380" y="70" text-anchor="middle" font-size="16" fill="#c6c6c6" style="--d:.3s">THE GPU NEVER WAITS</text>
+
+        <!-- track baselines -->
+        <line x1="150" y1="150" x2="720" y2="150" stroke="rgba(255,255,255,.08)"/>
+        <line x1="150" y1="432" x2="720" y2="432" stroke="rgba(255,255,255,.08)"/>
+
+        <!-- CPU -->
+        <text class="mono el" x="130" y="212" text-anchor="end" font-size="17" style="--d:.4s">CPU</text>
+        <g class="el" style="--d:.55s">
+          <rect x="150" y="182" width="110" height="48" rx="7" fill="rgba(255,255,255,.04)" stroke="rgba(255,255,255,.65)" stroke-width="1.4"/>
+          <text class="mono" x="205" y="212" text-anchor="middle" font-size="13" fill="#cfcfcf">schedule 1</text>
+        </g>
+        <g class="el" style="--d:.68s">
+          <rect x="272" y="182" width="110" height="48" rx="7" fill="rgba(255,255,255,.04)" stroke="rgba(255,255,255,.65)" stroke-width="1.4"/>
+          <text class="mono" x="327" y="212" text-anchor="middle" font-size="13" fill="#cfcfcf">schedule 2</text>
+        </g>
+        <g class="el" style="--d:.81s">
+          <rect x="394" y="182" width="110" height="48" rx="7" fill="rgba(255,255,255,.04)" stroke="rgba(255,255,255,.65)" stroke-width="1.4"/>
+          <text class="mono" x="449" y="212" text-anchor="middle" font-size="13" fill="#cfcfcf">schedule 3</text>
+        </g>
+        <g class="el" style="--d:.94s">
+          <rect x="516" y="182" width="110" height="48" rx="7" fill="rgba(255,255,255,.04)" stroke="rgba(255,255,255,.65)" stroke-width="1.4"/>
+          <text class="mono" x="571" y="212" text-anchor="middle" font-size="13" fill="#cfcfcf">schedule 4</text>
+        </g>
+
+        <text class="mono el" x="380" y="292" text-anchor="middle" font-size="13" fill="#7a7a7a" style="--d:1s">schedule n + 1 while batch n runs</text>
+
+        <!-- GPU -->
+        <text class="mono el" x="130" y="376" text-anchor="end" font-size="17" style="--d:.5s">GPU</text>
+        <g class="el" style="--d:.62s">
+          <rect x="190" y="332" width="132" height="72" rx="7" fill="#fff"/>
+          <text class="mono" x="256" y="374" text-anchor="middle" font-size="14" fill="#000" font-weight="700">batch 1</text>
+        </g>
+        <g class="el" style="--d:.75s">
+          <rect x="336" y="332" width="132" height="72" rx="7" fill="#fff"/>
+          <text class="mono" x="402" y="374" text-anchor="middle" font-size="14" fill="#000" font-weight="700">batch 2</text>
+        </g>
+        <g class="el" style="--d:.88s">
+          <rect x="482" y="332" width="132" height="72" rx="7" fill="#fff"/>
+          <text class="mono" x="548" y="374" text-anchor="middle" font-size="14" fill="#000" font-weight="700">batch 3</text>
+        </g>
+        <g class="el" style="--d:1.01s">
+          <rect x="628" y="332" width="92" height="72" rx="7" fill="#fff"/>
+          <text class="mono" x="674" y="374" text-anchor="middle" font-size="14" fill="#000" font-weight="700">batch 4</text>
+        </g>
+
+        <!-- moving playhead -->
+        <g>
+          <line class="head" x1="160" y1="150" x2="160" y2="432" stroke="#fff" stroke-width="1.6"/>
+          <circle class="head" cx="160" cy="150" r="4.5" fill="#fff"/>
+        </g>
+      </svg>
+    </div>
+  </div>
+  <div class="notes">CPU decisions for the next batch are made during the current GPU batch, so the two never serialize and the GPU timeline is fully tiled.</div>
+</section>
+
+<!-- ============ 06 · CONTINUOUS BATCHING ============ -->
+<section class="slide" data-deck-label="Continuous batching">
+  <div class="split">
+    <div class="left">
+      <p class="eyebrow rise" style="--d:.05s">06 — Batching</p>
+      <h2 class="ttl rise" style="--d:.16s">Continuous batching</h2>
+      <p class="body rise" style="--d:.3s">The batch is rebuilt on every token step. A new request joins immediately, a finished one leaves instantly. Nothing waits for the slowest request in a fixed batch, which lifts throughput and cuts latency together.</p>
+    </div>
+    <div class="visual rise" style="--d:.4s">
+      <svg class="vx" viewBox="0 0 760 600" role="img" aria-label="Requests entering and leaving the batch at every token step">
+        <text class="mono el" x="380" y="58" text-anchor="middle" font-size="15" fill="#c6c6c6" style="--d:.3s">BATCH REBUILT EVERY TOKEN STEP</text>
+
+        <!-- step headers -->
+        <g class="mono" font-size="13" fill="#7a7a7a" text-anchor="middle">
+          <text class="el" x="168" y="112" style="--d:.4s">t1</text>
+          <text class="el" x="264" y="112" style="--d:.46s">t2</text>
+          <text class="el" x="360" y="112" style="--d:.52s">t3</text>
+          <text class="el" x="456" y="112" style="--d:.58s">t4</text>
+          <text class="el" x="552" y="112" style="--d:.64s">t5</text>
+          <text class="el" x="648" y="112" style="--d:.7s">t6</text>
+        </g>
+
+        <!-- sweeping step highlight -->
+        <rect class="sweep" x="124" y="132" width="88" height="396" rx="14" fill="rgba(255,255,255,.07)"/>
+
+        <!-- request rows -->
+        <g class="r1">
+          <text class="mono el" x="104" y="176" text-anchor="end" font-size="14" fill="#9a9a9a" style="--d:.5s">R1</text>
+          <g class="el" style="--d:.52s"><rect class="cf" x="136" y="149" width="64" height="42" rx="10" stroke="rgba(255,255,255,.5)"/><text class="ct mono" x="168" y="176" text-anchor="middle" font-size="14">tok</text></g>
+          <g class="el" style="--d:.56s"><rect class="cf" x="232" y="149" width="64" height="42" rx="10" stroke="rgba(255,255,255,.5)"/><text class="ct mono" x="264" y="176" text-anchor="middle" font-size="14">tok</text></g>
+          <g class="el" style="--d:.6s"><rect class="cf" x="328" y="149" width="64" height="42" rx="10" stroke="rgba(255,255,255,.5)"/><text class="ct mono" x="360" y="176" text-anchor="middle" font-size="14">✓</text></g>
+        </g>
+        <g class="r2">
+          <text class="mono el" x="104" y="256" text-anchor="end" font-size="14" fill="#9a9a9a" style="--d:.58s">R2</text>
+          <g class="el" style="--d:.6s"><rect class="cf" x="136" y="229" width="64" height="42" rx="10" stroke="rgba(255,255,255,.5)"/><text class="ct mono" x="168" y="256" text-anchor="middle" font-size="14">tok</text></g>
+          <g class="el" style="--d:.64s"><rect class="cf" x="232" y="229" width="64" height="42" rx="10" stroke="rgba(255,255,255,.5)"/><text class="ct mono" x="264" y="256" text-anchor="middle" font-size="14">tok</text></g>
+          <g class="el" style="--d:.68s"><rect class="cf" x="328" y="229" width="64" height="42" rx="10" stroke="rgba(255,255,255,.5)"/><text class="ct mono" x="360" y="256" text-anchor="middle" font-size="14">tok</text></g>
+          <g class="el" style="--d:.72s"><rect class="cf" x="424" y="229" width="64" height="42" rx="10" stroke="rgba(255,255,255,.5)"/><text class="ct mono" x="456" y="256" text-anchor="middle" font-size="14">tok</text></g>
+          <g class="el" style="--d:.76s"><rect class="cf" x="520" y="229" width="64" height="42" rx="10" stroke="rgba(255,255,255,.5)"/><text class="ct mono" x="552" y="256" text-anchor="middle" font-size="14">✓</text></g>
+        </g>
+        <g class="r3">
+          <text class="mono el" x="104" y="336" text-anchor="end" font-size="14" fill="#9a9a9a" style="--d:.66s">R3</text>
+          <g class="el" style="--d:.68s"><rect class="cf" x="232" y="309" width="64" height="42" rx="10" stroke="rgba(255,255,255,.5)"/><text class="ct mono" x="264" y="336" text-anchor="middle" font-size="14">tok</text></g>
+          <g class="el" style="--d:.72s"><rect class="cf" x="328" y="309" width="64" height="42" rx="10" stroke="rgba(255,255,255,.5)"/><text class="ct mono" x="360" y="336" text-anchor="middle" font-size="14">tok</text></g>
+          <g class="el" style="--d:.76s"><rect class="cf" x="424" y="309" width="64" height="42" rx="10" stroke="rgba(255,255,255,.5)"/><text class="ct mono" x="456" y="336" text-anchor="middle" font-size="14">✓</text></g>
+        </g>
+        <g class="r4">
+          <text class="mono el" x="104" y="416" text-anchor="end" font-size="14" fill="#9a9a9a" style="--d:.74s">R4</text>
+          <g class="el" style="--d:.76s"><rect class="cf" x="328" y="389" width="64" height="42" rx="10" stroke="rgba(255,255,255,.5)"/><text class="ct mono" x="360" y="416" text-anchor="middle" font-size="14">tok</text></g>
+          <g class="el" style="--d:.8s"><rect class="cf" x="424" y="389" width="64" height="42" rx="10" stroke="rgba(255,255,255,.5)"/><text class="ct mono" x="456" y="416" text-anchor="middle" font-size="14">tok</text></g>
+          <g class="el" style="--d:.84s"><rect class="cf" x="520" y="389" width="64" height="42" rx="10" stroke="rgba(255,255,255,.5)"/><text class="ct mono" x="552" y="416" text-anchor="middle" font-size="14">tok</text></g>
+          <g class="el" style="--d:.88s"><rect class="cf" x="616" y="389" width="64" height="42" rx="10" stroke="rgba(255,255,255,.5)"/><text class="ct mono" x="648" y="416" text-anchor="middle" font-size="14">tok</text></g>
+        </g>
+        <g class="r5">
+          <text class="mono el" x="104" y="496" text-anchor="end" font-size="14" fill="#9a9a9a" style="--d:.82s">R5</text>
+          <g class="el" style="--d:.84s"><rect class="cf" x="424" y="469" width="64" height="42" rx="10" stroke="rgba(255,255,255,.5)"/><text class="ct mono" x="456" y="496" text-anchor="middle" font-size="14">tok</text></g>
+          <g class="el" style="--d:.88s"><rect class="cf" x="520" y="469" width="64" height="42" rx="10" stroke="rgba(255,255,255,.5)"/><text class="ct mono" x="552" y="496" text-anchor="middle" font-size="14">tok</text></g>
+          <g class="el" style="--d:.92s"><rect class="cf" x="616" y="469" width="64" height="42" rx="10" stroke="rgba(255,255,255,.5)"/><text class="ct mono" x="648" y="496" text-anchor="middle" font-size="14">tok</text></g>
+        </g>
+
+        <text class="mono el" x="168" y="566" text-anchor="middle" font-size="12.5" fill="#7a7a7a" style="--d:1s">joins anytime</text>
+        <text class="mono el" x="648" y="566" text-anchor="middle" font-size="12.5" fill="#7a7a7a" style="--d:1s">leaves when done</text>
+      </svg>
+    </div>
+  </div>
+  <div class="notes">Each token step is a fresh scheduling point: R3 and R4 join mid-flight, R1 and R2 leave the instant they finish.</div>
+</section>
+
+<!-- ============ 07 · PREFILL / DECODE ============ -->
+<section class="slide" data-deck-label="Prefill / Decode split">
+  <div class="split">
+    <div class="left">
+      <p class="eyebrow rise" style="--d:.05s">07 — Disaggregation</p>
+      <h2 class="ttl rise" style="--d:.16s">Prefill / decode split</h2>
+      <p class="body rise" style="--d:.3s">Prefill is compute-bound; decode is memory-bound. Run them on separate workers: prefill nodes process prompts, ship the KV cache over RDMA, and decode nodes stream tokens. Each pool scales on its own.</p>
+    </div>
+    <div class="visual rise" style="--d:.4s">
+      <svg class="vx" viewBox="0 0 760 560" role="img" aria-label="Prefill workers transferring KV cache to decode workers over RDMA">
+        <defs>
+          <marker id="a7" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M0,0 L10,5 L0,10 z" fill="#fff"/></marker>
+        </defs>
+
+        <!-- prompt input -->
+        <g>
+          <line class="el" x1="20" y1="210" x2="96" y2="210" stroke="rgba(255,255,255,.22)" style="--d:.2s"/>
+          <line class="el" x1="20" y1="250" x2="96" y2="250" stroke="rgba(255,255,255,.22)" style="--d:.28s"/>
+          <line class="el" x1="20" y1="290" x2="96" y2="290" stroke="rgba(255,255,255,.22)" style="--d:.36s"/>
+        </g>
+        <circle class="run" cx="24" cy="210" r="4" fill="#fff" style="--from:0px;--to:62px;--dur:1.9s;--b:0s"/>
+        <circle class="run" cx="24" cy="250" r="4" fill="#fff" style="--from:0px;--to:62px;--dur:1.9s;--b:.6s"/>
+        <circle class="run" cx="24" cy="290" r="4" fill="#fff" style="--from:0px;--to:62px;--dur:1.9s;--b:1.2s"/>
+        <text class="mono el" x="20" y="178" font-size="12" fill="#7a7a7a" style="--d:.4s">prompt</text>
+
+        <!-- prefill node -->
+        <g class="el" style="--d:.45s">
+          <circle cx="180" cy="250" r="104" fill="rgba(255,255,255,.04)" stroke="#fff" stroke-width="1.6"/>
+          <text class="mono" x="180" y="242" text-anchor="middle" font-size="16">PREFILL</text>
+          <text class="mono" x="180" y="272" text-anchor="middle" font-size="12.5" fill="#8a8a8a">compute-bound</text>
+        </g>
+
+        <!-- KV transfer -->
+        <line class="march el" x1="288" y1="250" x2="468" y2="250" stroke="#fff" stroke-width="1.6"
+              marker-end="url(#a7)" stroke-dasharray="4 12" style="--d:.7s"/>
+        <text class="mono el" x="378" y="222" text-anchor="middle" font-size="13" fill="#9a9a9a" style="--d:.85s">KV CACHE · RDMA</text>
+        <g transform="translate(296 250)">
+          <g class="run-kv" style="--b:0s">
+            <rect x="-15" y="-20" width="30" height="11" rx="2.5" fill="#fff"/>
+            <rect x="-15" y="-5" width="30" height="11" rx="2.5" fill="rgba(255,255,255,.75)"/>
+            <rect x="-15" y="10" width="30" height="11" rx="2.5" fill="rgba(255,255,255,.5)"/>
+          </g>
+          <g class="run-kv" style="--b:1.5s">
+            <rect x="-15" y="-20" width="30" height="11" rx="2.5" fill="#fff"/>
+            <rect x="-15" y="-5" width="30" height="11" rx="2.5" fill="rgba(255,255,255,.75)"/>
+            <rect x="-15" y="10" width="30" height="11" rx="2.5" fill="rgba(255,255,255,.5)"/>
+          </g>
+        </g>
+
+        <!-- decode node -->
+        <g class="el" style="--d:.6s">
+          <circle cx="580" cy="250" r="104" fill="rgba(255,255,255,.04)" stroke="#fff" stroke-width="1.6"/>
+          <text class="mono" x="580" y="242" text-anchor="middle" font-size="16">DECODE</text>
+          <text class="mono" x="580" y="272" text-anchor="middle" font-size="12.5" fill="#8a8a8a">memory-bound</text>
+        </g>
+
+        <!-- token stream -->
+        <line x1="684" y1="250" x2="740" y2="250" stroke="rgba(255,255,255,.25)"/>
+        <circle class="tok" cx="700" cy="250" r="6" fill="#fff" style="--b:0s"/>
+        <circle class="tok" cx="720" cy="250" r="6" fill="#fff" style="--b:.5s"/>
+        <circle class="tok" cx="740" cy="250" r="6" fill="#fff" style="--b:1s"/>
+
+        <!-- independent pools -->
+        <g fill="rgba(255,255,255,.05)" stroke="rgba(255,255,255,.5)" stroke-width="1.3">
+          <circle class="el" cx="150" cy="430" r="10" style="--d:.9s"/><circle class="el" cx="210" cy="430" r="10" style="--d:.96s"/>
+          <circle class="el" cx="540" cy="430" r="10" style="--d:1s"/><circle class="el" cx="580" cy="430" r="10" style="--d:1.06s"/><circle class="el" cx="620" cy="430" r="10" style="--d:1.12s"/>
+        </g>
+        <text class="mono el" x="180" y="468" text-anchor="middle" font-size="12" fill="#7a7a7a" style="--d:1.1s">prefill pool</text>
+        <text class="mono el" x="580" y="468" text-anchor="middle" font-size="12" fill="#7a7a7a" style="--d:1.16s">decode pool</text>
+        <text class="mono el" x="380" y="450" text-anchor="middle" font-size="12.5" fill="#9a9a9a" style="--d:1.25s">scaled independently</text>
+      </svg>
+    </div>
+  </div>
+  <div class="notes">Different bottlenecks live on different machines. Prefill ships KV, decode streams tokens, and the two pools scale independently.</div>
+</section>
+
+<!-- ============ 08 · DOCKER GUIDE ============ -->
+<section class="slide" data-deck-label="Docker guide">
+  <div class="ref">
+    <div class="codewin rise" style="--d:.15s">
+      <div class="win-bar">
+        <span class="win-ic">Y</span>
+        <span class="win-title js-title">compose.yaml</span>
+        <span class="win-lang"><span class="js-lang">YAML</span><span class="caret">▾</span></span>
+        <button class="win-copy js-copy" type="button" aria-label="Copy the full docker guide" title="Copy full guide">
+          <svg viewBox="0 0 24 24"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>
+          <svg class="ic-check" viewBox="0 0 24 24" style="display:none"><path d="M4 12.5l5 5L20 6.5"/></svg>
+        </button>
+      </div>
+      <div class="win-tabs">
+        <button class="win-tab active" type="button" data-title="compose.yaml" data-lang="YAML"><span class="td">Y</span>compose.yaml</button>
+        <button class="win-tab" type="button" data-title="run.ps1" data-lang="PowerShell"><span class="td">PS</span>run.ps1</button>
+      </div>
+      <div class="win-body">
+        <div class="win-pane active js-pane" data-pane="yaml"><pre><code id="yaml-view"><span class="key">services:</span>
+  <span class="key">model-download:</span>
+    <span class="key">image:</span> <span class="str">lmsysorg/sglang:latest-cu130</span>
+    <span class="key">container_name:</span> <span class="str">model-download</span>
+    <span class="key">environment:</span>
+      - <span class="str">HF_ENDPOINT=https://hf-mirror.com</span>
+    <span class="key">volumes:</span>
+      - <span class="str">hf-cache:/root/.cache/huggingface</span>
+    <span class="key">entrypoint:</span>
+      - <span class="str">python3</span>
+      - <span class="str">-c</span>
+      - <span class="str">|</span>
+        <span class="ctrl">import</span> time
+        <span class="ctrl">from</span> huggingface_hub <span class="ctrl">import</span> snapshot_download, try_to_load_from_cache
+        model = <span class="str">"Qwen/Qwen3-0.6B"</span>
+        <span class="ctrl">if</span> try_to_load_from_cache(model, <span class="str">"config.json"</span>) <span class="ctrl">is not</span> <span class="kw">None</span>:
+            <span class="fn">print</span>(f<span class="str">"Model already downloaded: {model}"</span>, flush=<span class="kw">True</span>)
+        <span class="ctrl">else</span>:
+            <span class="ctrl">while</span> <span class="kw">True</span>:
+                <span class="ctrl">try</span>:
+                    <span class="fn">snapshot_download</span>(repo_id=model)
+                    <span class="fn">print</span>(f<span class="str">"Download complete: {model}"</span>, flush=<span class="kw">True</span>)
+                    <span class="ctrl">break</span>
+                <span class="ctrl">except</span> <span class="typ">Exception</span> <span class="ctrl">as</span> e:
+                    <span class="fn">print</span>(f<span class="str">"Download failed, retrying... ({e})"</span>, flush=<span class="kw">True</span>)
+                    time.<span class="fn">sleep</span>(<span class="num">5</span>)
+    <span class="key">restart:</span> <span class="str">"no"</span>
+
+  <span class="key">sglang:</span>
+    <span class="key">image:</span> <span class="str">lmsysorg/sglang:latest-cu130</span>
+    <span class="key">container_name:</span> <span class="str">sglang</span>
+    <span class="key">depends_on:</span>
+      <span class="key">model-download:</span>
+        <span class="key">condition:</span> <span class="str">service_completed_successfully</span>
+    <span class="key">ports:</span>
+      - <span class="str">"30000:30000"</span>
+    <span class="key">volumes:</span>
+      - <span class="str">hf-cache:/root/.cache/huggingface</span>
+    <span class="key">environment:</span>
+      - <span class="str">HF_HUB_OFFLINE=1</span>
+    <span class="key">ipc:</span> host
+    <span class="key">command:</span>
+      - <span class="str">python3</span>
+      - <span class="str">-m</span>
+      - <span class="str">sglang.launch_server</span>
+      - <span class="str">--model-path</span>
+      - <span class="str">Qwen/Qwen3-0.6B</span>
+      - <span class="str">--host</span>
+      - <span class="str">0.0.0.0</span>
+      - <span class="str">--port</span>
+      - <span class="str">"30000"</span>
+      - <span class="str">--context-length</span>
+      - <span class="str">"8192"</span>
+      - <span class="str">--mem-fraction-static</span>
+      - <span class="str">"0.75"</span>
+      - <span class="str">--reasoning-parser</span>
+      - <span class="str">qwen3</span>
+    <span class="key">deploy:</span>
+      <span class="key">resources:</span>
+        <span class="key">reservations:</span>
+          <span class="key">devices:</span>
+            - <span class="key">driver:</span> nvidia
+              <span class="key">count:</span> all
+              <span class="key">capabilities:</span> <span class="str">[gpu]</span>
+    <span class="key">restart:</span> <span class="str">unless-stopped</span>
+
+  <span class="key">open-webui:</span>
+    <span class="key">image:</span> <span class="str">ghcr.io/open-webui/open-webui:main</span>
+    <span class="key">container_name:</span> <span class="str">open-webui</span>
+    <span class="key">depends_on:</span>
+      - <span class="str">sglang</span>
+    <span class="key">ports:</span>
+      - <span class="str">"3000:8080"</span>
+    <span class="key">environment:</span>
+      - <span class="str">OPENAI_API_BASE_URL=http://sglang:30000/v1</span>
+      - <span class="str">OPENAI_API_KEY=none</span>
+      - <span class="str">WEBUI_AUTH=false</span>
+    <span class="key">volumes:</span>
+      - <span class="str">open-webui:/app/backend/data</span>
+    <span class="key">restart:</span> <span class="str">unless-stopped</span>
+
+<span class="key">volumes:</span>
+  <span class="key">hf-cache:</span>
+    <span class="key">name:</span> <span class="str">hf-cache</span>
+  <span class="key">open-webui:</span>
+    <span class="key">name:</span> <span class="str">open-webui</span></code></pre>
+        </div>
+        <div class="win-pane js-pane" data-pane="ps"><pre><code id="ps-script"><span class="com"># docker complete guide of sglang with webui — 1: Script_ONE_Start</span>
+
+<span class="fn">New-Item</span> <span class="var">-ItemType</span> Directory <span class="var">-Force</span> <span class="var">-Path</span> C:\sglang | <span class="fn">Out-Null</span>
+<span class="str">@'</span>
+services:
+  model-download:
+    image: lmsysorg/sglang:latest-cu130
+    container_name: model-download
+    environment:
+      - HF_ENDPOINT=https://hf-mirror.com
+    volumes:
+      - hf-cache:/root/.cache/huggingface
+    entrypoint:
+      - python3
+      - -c
+      - |
+        import time
+        from huggingface_hub import snapshot_download, try_to_load_from_cache
+        model = "Qwen/Qwen3-0.6B"
+        if try_to_load_from_cache(model, "config.json") is not None:
+            print(f"Model already downloaded: {model}", flush=True)
+        else:
+            while True:
+                try:
+                    snapshot_download(repo_id=model)
+                    print(f"Download complete: {model}", flush=True)
+                    break
+                except Exception as e:
+                    print(f"Download failed, retrying... ({e})", flush=True)
+                    time.sleep(5)
+    restart: "no"
+
+  sglang:
+    image: lmsysorg/sglang:latest-cu130
+    container_name: sglang
+    depends_on:
+      model-download:
+        condition: service_completed_successfully
+    ports:
+      - "30000:30000"
+    volumes:
+      - hf-cache:/root/.cache/huggingface
+    environment:
+      - HF_HUB_OFFLINE=1
+    ipc: host
+    command:
+      - python3
+      - -m
+      - sglang.launch_server
+      - --model-path
+      - Qwen/Qwen3-0.6B
+      - --host
+      - 0.0.0.0
+      - --port
+      - "30000"
+      - --context-length
+      - "8192"
+      - --mem-fraction-static
+      - "0.75"
+      - --reasoning-parser
+      - qwen3
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    restart: unless-stopped
+
+  open-webui:
+    image: ghcr.io/open-webui/open-webui:main
+    container_name: open-webui
+    depends_on:
+      - sglang
+    ports:
+      - "3000:8080"
+    environment:
+      - OPENAI_API_BASE_URL=http://sglang:30000/v1
+      - OPENAI_API_KEY=none
+      - WEBUI_AUTH=false
+    volumes:
+      - open-webui:/app/backend/data
+    restart: unless-stopped
+
+volumes:
+  hf-cache:
+    name: hf-cache
+  open-webui:
+    name: open-webui
+<span class="str">'@</span> | <span class="fn">Set-Content</span> <span class="var">-Path</span> C:\sglang\compose.yaml <span class="var">-Encoding</span> UTF8
+cd C:\sglang
+
+<span class="com"># pull the image and start the stack</span>
+<span class="fn">docker</span> pull lmsysorg/sglang:latest-cu130
+cd C:\sglang
+<span class="fn">docker</span> compose up <span class="var">-d</span>
+
+<span class="com"># follow the sglang server log</span>
+<span class="fn">docker</span> logs <span class="var">-f</span> sglang
+
+<span class="com"># verify the openai-compatible api</span>
+<span class="fn">curl.exe</span> http://localhost:30000/v1/models
+
+<span class="com"># check the webui (http://localhost:3000)</span>
+<span class="fn">docker</span> logs <span class="var">--tail</span> <span class="num">30</span> open-webui</code></pre>
+        </div>
+      </div>
+      <div class="win-hint">
+        <span>SGLang + Open WebUI · Docker</span>
+        <span>webui :3000 &nbsp;·&nbsp; api :30000 &nbsp;·&nbsp; click the copy icon</span>
+      </div>
+    </div>
+  </div>
+  <textarea class="guide-source" style="position:absolute;left:-9999px;top:0;width:1px;height:1px;opacity:0" aria-hidden="true"></textarea>
+  <div class="notes">Reference page styled like a code editor. The copy icon copies the full paste-ready PowerShell script, which writes compose.yaml and pulls, starts and verifies the stack.</div>
+</section>
+
+<!-- ============ 09 · WSL NATIVE GUIDE ============ -->
+<section class="slide" data-deck-label="WSL guide">
+  <div class="ref">
+    <div class="codewin rise" style="--d:.15s">
+      <div class="win-bar">
+        <span class="win-ic">SH</span>
+        <span class="win-title js-title">wsl.sh</span>
+        <span class="win-lang"><span class="js-lang">Bash · WSL2</span><span class="caret">▾</span></span>
+        <button class="win-copy js-copy" type="button" aria-label="Copy the WSL guide" title="Copy full guide">
+          <svg viewBox="0 0 24 24"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>
+          <svg class="ic-check" viewBox="0 0 24 24" style="display:none"><path d="M4 12.5l5 5L20 6.5"/></svg>
+        </button>
+      </div>
+      <div class="win-tabs">
+        <button class="win-tab active" type="button" data-title="wsl.sh" data-lang="Bash · WSL2" data-copy="wsl"><span class="td">SH</span>wsl.sh</button>
+        <button class="win-tab" type="button" data-title="cuda.sh" data-lang="Bash · optional" data-copy="cuda"><span class="td">OPT</span>cuda toolkit · optional</button>
+      </div>
+      <div class="win-body">
+        <div class="win-pane active js-pane" data-pane="wsl"><pre><code class="bash-code"><span class="com"># WSL2 native install · SGLang — check the GPU first</span>
+<span class="fn">nvidia-smi</span>
+
+<span class="com"># build tools (one-liner)</span>
+<span class="kw">sudo</span> apt update <span class="ctrl">&amp;&amp;</span> <span class="kw">sudo</span> apt install <span class="var">-y</span> build-essential python3-dev curl git
+
+<span class="com"># install uv (one-liner), then reload the shell</span>
+<span class="fn">curl</span> <span class="var">-LsSf</span> https://astral.sh/uv/install.sh | <span class="fn">sh</span>
+<span class="kw">source</span> ~/.bashrc
+
+<span class="com"># create and activate a python 3.12 venv</span>
+<span class="fn">uv</span> venv ~/sglang-env <span class="var">--python</span> 3.12
+<span class="kw">source</span> ~/sglang-env/bin/activate
+
+<span class="com"># install sglang with prereleases (one-liner)</span>
+<span class="fn">uv</span> pip install <span class="var">--prerelease</span>=allow sglang openai <span class="str">"huggingface_hub[hf_transfer]"</span>
+
+<span class="com"># each new shell: activate + use the hf mirror</span>
+<span class="kw">source</span> ~/sglang-env/bin/activate
+<span class="kw">export</span> <span class="var">HF_ENDPOINT</span>=https://hf-mirror.com
+
+<span class="com"># serve (multi-line command — backslashes join it into one)</span>
+<span class="fn">sglang</span> serve Qwen/Qwen3-0.6B <span class="esc">\</span>
+  <span class="var">--host</span> 0.0.0.0 <span class="var">--port</span> 30000 <span class="esc">\</span>
+  <span class="var">--context-length</span> 8192 <span class="esc">\</span>
+  <span class="var">--mem-fraction-static</span> 0.75 <span class="esc">\</span>
+  <span class="var">--reasoning-parser</span> qwen3
+
+<span class="com"># backend url while it is running (open in windows browser,</span>
+<span class="com"># or point open webui / cherry studio's openai base url here)</span>
+<span class="com">#   http://localhost:30000</span>
+<span class="com">#   http://localhost:30000/v1          openai-compatible base url</span>
+<span class="com">#   http://localhost:30000/v1/models   lists Qwen3-0.6B</span>
+<span class="com">#   http://localhost:30000/health      ready check</span></code></pre></div>
+        <div class="win-pane js-pane" data-pane="cuda"><pre><code class="bash-code"><span class="com"># OPTIONAL — only if nvidia-smi works but nvcc / CUDA_HOME is missing</span>
+
+<span class="com"># 1. download and register the NVIDIA cuda keyring (one-liner wget)</span>
+<span class="fn">wget</span> https://developer.download.nvidia.com/compute/cuda/repos/wsl-ubuntu/x86_64/cuda-keyring_1.1-1_all.deb
+
+<span class="com"># 2. install the keyring package</span>
+<span class="kw">sudo</span> dpkg <span class="var">-i</span> cuda-keyring_1.1-1_all.deb
+
+<span class="com"># 3. install cuda toolkit 13.0 (one-liner)</span>
+<span class="kw">sudo</span> apt update <span class="ctrl">&amp;&amp;</span> <span class="kw">sudo</span> apt install <span class="var">-y</span> cuda-toolkit-13-0
+
+<span class="com"># 4. persist CUDA_HOME and reload (one-liner)</span>
+<span class="fn">echo</span> <span class="str">'export CUDA_HOME=/usr/local/cuda-13.0'</span> <span class="ctrl">&gt;&gt;</span> ~/.bashrc <span class="ctrl">&amp;&amp;</span> <span class="kw">source</span> ~/.bashrc</code></pre></div>
+      </div>
+      <div class="win-hint">
+        <span>WSL2 · Ubuntu · uv + SGLang native</span>
+        <span>backend http://localhost:30000/v1 &nbsp;·&nbsp; cuda tab optional &nbsp;·&nbsp; click copy</span>
+      </div>
+    </div>
+  </div>
+  <textarea class="guide-source" style="position:absolute;left:-9999px;top:0;width:1px;height:1px;opacity:0" aria-hidden="true"></textarea>
+  <div class="notes">WSL2 native route: nvidia-smi, build tools, uv, a 3.12 venv, prerelease sglang, then the multi-line serve command. The CUDA toolkit tab is optional, only needed when the toolkit is missing.</div>
+</section>
+
+</deck-stage>
+
+<script src="./_shared/runtime.js"></script>
+<script>
+(function(){
+  var lock=0;
+  function nav(delta){document.dispatchEvent(new KeyboardEvent('keydown',{key:delta>0?'ArrowRight':'ArrowLeft'}));}
+  window.addEventListener('wheel',function(e){
+    if(e.target.closest&&e.target.closest('.win-pane'))return;
+    var now=Date.now();
+    if(now-lock<650)return;
+    var d=Math.abs(e.deltaY)>=Math.abs(e.deltaX)?e.deltaY:e.deltaX;
+    if(Math.abs(d)<12)return;
+    lock=now;nav(d);
+  },{passive:true});
+  var sx=0,sy=0;
+  window.addEventListener('touchstart',function(e){sx=e.touches[0].clientX;sy=e.touches[0].clientY;},{passive:true});
+  window.addEventListener('touchend',function(e){
+    var dx=e.changedTouches[0].clientX-sx,dy=e.changedTouches[0].clientY-sy;
+    if(Math.abs(dx)<40&&Math.abs(dy)<40)return;
+    nav((Math.abs(dy)>=Math.abs(dx)?dy:dx));
+  },{passive:true});
+
+  /* ===== reference slides: editor tabs + one-click copy (both pages) ===== */
+  document.querySelectorAll('[data-deck-label="Docker guide"],[data-deck-label="WSL guide"]').forEach(function(win){
+    var tabs=win.querySelectorAll('.win-tab');
+    var panes=win.querySelectorAll('.js-pane');
+    var titleEl=win.querySelector('.js-title'),langEl=win.querySelector('.js-lang');
+    var btn=win.querySelector('.js-copy'),area=win.querySelector('.guide-source');
+    var icCopy=btn.querySelector('svg:not(.ic-check)'),icCheck=btn.querySelector('.ic-check');
+    var current=win.querySelector('.win-tab.active');
+
+    function codeOf(tab){
+      var pane=win.querySelector('.js-pane[data-pane="'+tab.dataset.copy+'"]')
+              ||win.querySelector('.js-pane[data-pane="ps"]');
+      return pane.querySelector('code').textContent.trim();
+    }
+    tabs.forEach(function(tab){
+      tab.addEventListener('click',function(){
+        current=tab;
+        tabs.forEach(function(t){t.classList.remove('active');});
+        panes.forEach(function(p){p.classList.remove('active');});
+        tab.classList.add('active');
+        win.querySelector('.js-pane[data-pane="'+tab.dataset.copy+'"]').classList.add('active');
+        if(titleEl)titleEl.textContent=tab.dataset.title;
+        if(langEl)langEl.textContent=tab.dataset.lang;
+      });
+    });
+
+    function flash(){
+      btn.classList.add('ok');icCopy.style.display='none';icCheck.style.display='block';
+      setTimeout(function(){
+        btn.classList.remove('ok');icCopy.style.display='block';icCheck.style.display='none';
+      },1600);
+    }
+    function fallback(text){
+      area.style.position='fixed';area.style.left='0';area.style.top='0';area.style.opacity='0';
+      area.value=text;area.focus();area.select();
+      try{document.execCommand('copy');flash();}catch(e){}
+      area.style.position='absolute';area.style.left='-9999px';
+      btn.focus();
+    }
+    btn.addEventListener('click',function(){
+      var text=codeOf(current);
+      if(navigator.clipboard&&navigator.clipboard.writeText){
+        navigator.clipboard.writeText(text).then(flash).catch(function(){fallback(text);});
+      }else{fallback(text);}
+    });
+  });
+})();
+</script>
+</body>
+</html>
